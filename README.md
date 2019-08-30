@@ -31,7 +31,7 @@ You must deploy the app as a Lambda function on a latest version of Node.js runt
 
 Follow these steps to deploy the app on lambda:
 
-1. Clone the project from [GitHub](https://github.com/cloudinary-devs/cloudinary-face-rekognition)
+1. Clone the project
 2. `cd cloudinary-face-rekognition/lambda`
 3. `npm i`
 4. If you need to deploy this app to a Linux environemnt and if the app is packaged on non-Linux machines such as OS X and Windows, run the commands below. This will setup Sharp module (requied for face extraction from images) for Linux environment. Additional details at - https://github.com/lovell/sharp/blob/master/docs/install.md
@@ -70,7 +70,7 @@ example, `faceLabel:John Doe`.
 #### Configuring API Gateway
 Cloudinary integrates with Amazon Rekognition through the Amazon API Gateway. Follow these steps:
 
-1. In the API Gateway console, import the Swagger file from [Github](https://github.com/cloudinary-devs/cloudinary-face-rekognition/api/rekog_api.yaml) to set up your API by following this [procedure](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-import-api.html).
+1. In the API Gateway console, import the Swagger file `api/rekog_api.yaml` to set up your API by following this [procedure](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-import-api.html).
 
 2. Associate the Lambda function created in step 1 with your API, like this:
 
@@ -104,14 +104,14 @@ Repeat the above procedure to train all the images you’re targeting for facial
 
 Alternatively, you can upload training images in bulk through Cloudinary’s SDK. Do either of the following:
 
-* If your trainable images that are tagged with `faceLabel:<name>` are already in a training folder, call the [`indexFaces` function](https://github.com/orgs/cloudinary-devs/teams/solutions). That function then accepts the training folder name, retrieves all the images from the folder, and indexes the ones with the `faceLabel` tag, as in this code:
+* If your trainable images that are tagged with `faceLabel:<name>` are already in a training folder, call the `indexFaces` function on `index.js`. That function the accepts the training folder name, retrieves all the images from the folder, and indexes the ones with the `faceLabel` tag, as in this code:
 
 	```javascript
     const cld_rekog = require('./index')
 	cld_rekog.indexFaces('training/');
     ```
 
-* If you have a list of the URLs and tags for all your images, call the [`uploadAndIndex` function](https://github.com/orgs/cloudinary-devs/teams/solutions). That function then uploads the images, one by one, to Cloudinary, tagging and indexing them during the process. See this code:
+* If you have a list of the URLs and tags for all your images, call the `uploadAndIndex` function. That function then uploads the images, one by one, to Cloudinary, tagging and indexing them during the process. See this code:
 
 ```javascript
 const cld_rekog = require('./index')
@@ -145,7 +145,7 @@ Subsequent to an image upload, the following takes place:
 3. The Lambda function checks the upload response and, if it verifies that the image has been uploaded to the `training` folder with a `faceLabel` tag, indexes the image via Amazon Rekognition. 
 
 Once indexing is complete, `faceId` is displayed as an image tag, such as the one below. Refresh the page to see `faceId`.
-![Example 1](https://cloudinary-res.cloudinary.com/image/upload/blog/face-recognition/uploaded-and-indexed.jpg)
+![Index and Upload Example 1](https://cloudinary-res.cloudinary.com/image/upload/blog/face-recognition/uploaded-and-indexed.jpg)
 
 
 ## Testing the App
