@@ -1,0 +1,22 @@
+swagger: "2.0"
+info:
+  version: "2019-05-25T23:45:51Z"
+  title: "cloudinary-rekog"
+host: "xxxx.execute-api.us-east-1.amazonaws.com"
+basePath: "/test"
+schemes:
+- "https"
+paths:
+  /cloudinary-rekog:
+    post:
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "200 response"
+          schema:
+            $ref: "#/definitions/Empty"
+definitions:
+  Empty:
+    type: "object"
+    title: "Empty Schema"
