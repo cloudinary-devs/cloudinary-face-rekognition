@@ -102,7 +102,7 @@ You can upload images to Cloudinary in several ways. The steps below do that wit
 
 Repeat the above procedure to train all the images you’re targeting for facial recognition. 
 
-Alternatively, you can upload training images in bulk through Cloudinary’s SDK. Do either of the following:
+Alternatively, you can upload training images in bulk through Cloudinary’s SDK. This doesn’t require Lambda Function and can be done from any NodeJS environment. Just ensure the node modules are installed and environment variables as stated above are defined.
 
 * If your trainable images that are tagged with `faceLabel:<name>` are already in a training folder, call the `indexFaces` function on `index.js`. That function the accepts the training folder name, retrieves all the images from the folder, and indexes the ones with the `faceLabel` tag, as in this code:
 
@@ -115,17 +115,18 @@ Alternatively, you can upload training images in bulk through Cloudinary’s SDK
 
 ```javascript
 const cld_rekog = require('./index')
+// Assume we have three entries to upload and index as below
 const imageData = [{
             url: 'https://cloudinary-res.cloudinary.com/image/upload/q_auto/profile_marissa_masangcay.jpg',
-            tag: 'Marissa Masangcay'
+            tag: 'faceLabel:Marissa Masangcay'
         },
         {
             url: 'https://cloudinary-res.cloudinary.com/image/upload/q_auto/profile_shirly_manor.jpg',
-            tag: 'Shirly Manor'
+            tag: 'faceLabel:Shirly Manor'
         },
         {
             url: 'https://cloudinary-res.cloudinary.com/image/upload/q_auto/profile_tal_admon.jpg',
-            tag: 'Tal Admon'
+            tag: 'faceLabel:Tal Admon'
         }
     ]
 

@@ -332,8 +332,11 @@ exports.uploadAndIndex = async (url, label) => {
 exports.indexFaces = async (folderName) => {
 	try {
 		const deleteResponse = await rekognition.deleteCollection({
-			CollectionId: environmentVariables.rekognitionCollection
-		}).promise()
+				CollectionId: environmentVariables.rekognitionCollection
+			}).promise()
+			.catch(error => {
+				console.log(error)
+			})
 		console.log('Deleted collection - ', deleteResponse)
 
 		const createResponse = await rekognition.createCollection({
