@@ -34,7 +34,7 @@ Follow these steps to deploy the app on lambda:
 1. Clone the project
 2. `cd cloudinary-face-rekognition/lambda`
 3. `npm i`
-4. If you need to deploy this app to a Linux environemnt and if the app is packaged on non-Linux machines such as OS X and Windows, run the commands below. This will setup Sharp module (requied for face extraction from images) for Linux environment. Additional details at - https://github.com/lovell/sharp/blob/master/docs/install.md
+4. If you need to deploy this app to a Linux environment and if the app is packaged on non-Linux machines such as OS X and Windows, run the commands below. This will setup Sharp module (requied for face extraction from images) for Linux environment. Additional details at - https://github.com/lovell/sharp/blob/master/docs/install.md
 
     `rm -rf node_modules/sharp`
     
