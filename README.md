@@ -87,7 +87,8 @@ Next, set up your Cloudinary environment:
 1. Log in to your Cloudinary account and go to your [Media Library](https://cloudinary.com/console/media_library/folders/all/). In the root folder, create two folders called `training` and `assets`.
 
 2. Go to  [**Upload Settings**](https://cloudinary.com/console/settings/upload) and enter in the **Notification URL** field the API Gateway endpoint you configured above. Cloudinary sends upload and tagging notifications to this endpoint, a requirement for this app. 
-Note: This notification url under settings is a global entry and will get notifications for all events from Cloudinary - even the ones that are not necessary for this app. Instead of using this global entry, you can provide notification urls when doing uploads to get upload notifications only. More details at - https://[Upload API Reference](https://cloudinary.com/documentation/image_upload_api_reference#upload_method)
+
+    **Note:** This notification url under settings is a global entry and will get notifications for all events from Cloudinary - even the ones that are not necessary for this app. Instead of using this global entry, you can provide notification urls when doing uploads to get upload notifications only. More details at - [Upload API Reference](https://cloudinary.com/documentation/image_upload_api_reference#upload_method)
 
     ![Cloudinary Settings](https://cloudinary-res.cloudinary.com/image/upload/blog/face-recognition/cloudinary-settings.jpg)
 
