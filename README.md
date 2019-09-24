@@ -1,5 +1,10 @@
-# Cloudinary Face Rekognition
+# Using Amazon Rekognition on Cloudinary to Auto-Tag Faces with Names
+
 This app recognizes faces in images that are uploaded to Cloudinary and will auto tag images with their names. It uses Amazon Rekognition Service to index and detect the faces.
+
+To accomplish auto tagging of faces, this app learns people’s faces from photos uploaded to the "training" folder in Cloudinary. In many cases, a single “training” photo of someone is enough for the app to learn and, later on, accurately identify and tag that person. This works in most photograph scenes and even in pictures with many other people in them.
+
+It’s important to note that indexing and labeling faces is a private process for your organization. Each image’s’ index data is stored in your Amazon Web Services (AWS) account only.
 
 The app leverages the following services for auto-tagging images:
 - [**Cloudinary**](https://cloudinary.com): For uploading, tagging, and managing images.
@@ -7,7 +12,7 @@ The app leverages the following services for auto-tagging images:
 - [**AWS Lambda**](https://aws.amazon.com/lambda/): For calling Amazon Rekognition APIs for indexing and searching.
 - [**Amazon API Gateway**](https://aws.amazon.com/api-gateway/): For exposing the Lambda function through API, which Cloudinary then registers as a web hook.
 
-## Two workflows are involved:
+## 1. Two workflows are involved:
 
 #### 1. Creation of a trained collection
 This flow takes the images uploaded to Cloudinary, invokes Amazon Rekognition, which then indexes the faces and stores them into a Amazon Rekognition collection.
@@ -19,7 +24,7 @@ This flow takes the images uploaded to Cloudinary, invokes Amazon Rekognition, a
 
 ![Search Flow](https://cloudinary-res.cloudinary.com/image/upload/blog/face-recognition/search-flow.jpg)
 
-## Configuring the app
+## 2.   Configuring the app
 Follow the steps below to configure and deploy the app.
 
 As a preliminary step, register for an [AWS account](https://aws.amazon.com/account/) and a [free Cloudinary account](https://cloudinary.com/users/register/free).
@@ -27,14 +32,14 @@ As a preliminary step, register for an [AWS account](https://aws.amazon.com/acco
 
 ### Setting up the AWS Environment
 #### Configuring Lambda
-You must deploy the app as a Lambda function on a latest version of Node.js runtime. Details on building Lambda Functions with Node.js can be found at - https://docs.aws.amazon.com/lambda/latest/dg/programming-model.html
+You must deploy the app as a Lambda function on Node.js runtime. This app has been tested with NodeJS version v12.3.1. Details on building Lambda Functions with Node.js can be found at - https://docs.aws.amazon.com/lambda/latest/dg/programming-model.html
 
 Follow these steps to deploy the app on lambda:
 
 1. Clone the project
 2. `cd cloudinary-face-rekognition/lambda`
 3. `npm i`
-4. If you need to deploy this app to a Linux environment and if the app is packaged on non-Linux machines such as OS X and Windows, run the commands below. This will setup Sharp module (requied for face extraction from images) for Linux environment. Additional details at - https://github.com/lovell/sharp/blob/master/docs/install.md
+4. If you need to deploy this app to a Linux environemnt and if the app is packaged on non-Linux machines such as OS X and Windows, run the commands below. This will setup Sharp module (required for face extraction from images) for Linux environment. Additional details at - https://github.com/lovell/sharp/blob/master/docs/install.md
 
     `rm -rf node_modules/sharp`
     
@@ -79,13 +84,14 @@ Cloudinary integrates with Amazon Rekognition through the Amazon API Gateway. Fo
 ### Setting Up the Cloudinary Environment
 Next, set up your Cloudinary environment:
 
-1. Log in to your Cloudinary account and go to your [Media Library](https://cloudinary.com/console/media_library/folders/all/). In the root folder, create two folders called ‘training’ and `assets`.
+1. Log in to your Cloudinary account and go to your [Media Library](https://cloudinary.com/console/media_library/folders/all/). In the root folder, create two folders called `training` and `assets`.
 
-2. Go to  [**Upload Settings**](https://cloudinary.com/console/settings/upload) and enter in the **Notification URL** field the API Gateway endpoint you configured above. Cloudinary sends upload and tagging notifications to this endpoint, a requirement for this app.
+2. Go to  [**Upload Settings**](https://cloudinary.com/console/settings/upload) and enter in the **Notification URL** field the API Gateway endpoint you configured above. Cloudinary sends upload and tagging notifications to this endpoint, a requirement for this app. 
+Note: This notification url under settings is a global entry and will get notifications for all events from Cloudinary - even the ones that are not necessary for this app. Instead of using this global entry, you can provide notification urls when doing uploads to get upload notifications only. More details at - https://[Upload API Reference](https://cloudinary.com/documentation/image_upload_api_reference#upload_method)
 
     ![Cloudinary Settings](https://cloudinary-res.cloudinary.com/image/upload/blog/face-recognition/cloudinary-settings.jpg)
 
-## Using the app
+## 3. Using the app
 Now that all the components are in place, you can start using the app. First, set up a trained collection by indexing your facial images with Amazon Rekognition. In order to do this, all you have to do is upload them to the `training` folder.
 
 **Note**  To create a trained collection, upload single-face images only to the `training` folder. Multiple-face images are not supported for this app.
@@ -96,7 +102,7 @@ You can upload images to Cloudinary in several ways. The steps below do that wit
 2. Navigate to the ‘training’ folder
 3. Click **Upload** on the top right-hand corner.
 4. Click the **Advanced** link at the bottom of the upload widget that is displayed.
-5. Enter a tag according to the syntax `faceLabel:<Name>, for example, `faceLabel:John Doe`.
+5. Enter a tag according to the syntax `faceLabel:<Name>`, for example, `faceLabel:John Doe`.
 6. Click to select an image to upload from any of the sources available on the upload widget.
 ![Upload Example](https://cloudinary-res.cloudinary.com/image/upload/blog/face-recognition/upload-example.jpg)
 
@@ -104,14 +110,14 @@ Repeat the above procedure to train all the images you’re targeting for facial
 
 Alternatively, you can upload training images in bulk through Cloudinary’s SDK. This doesn’t require Lambda Function and can be done from any NodeJS environment. Just ensure the node modules are installed and environment variables as stated above are defined.
 
-* If your trainable images that are tagged with `faceLabel:<name>` are already in a training folder, call the `indexFaces` function on `index.js`. That function the accepts the training folder name, retrieves all the images from the folder, and indexes the ones with the `faceLabel` tag, as in this code:
+* If your trainable images that are tagged with `faceLabel:<name>` are already in a training folder, call the `indexFaces` function on `lambda/index.js`. That function the accepts the training folder name, retrieves all the images from the folder, and indexes the ones with the `faceLabel` tag, as in this code:
 
 	```javascript
     const cld_rekog = require('./index')
 	cld_rekog.indexFaces('training/');
     ```
 
-* If you have a list of the URLs and tags for all your images, call the `uploadAndIndex` function. That function then uploads the images, one by one, to Cloudinary, tagging and indexing them during the process. See this code:
+* If you have a list of the URLs and tags for all your images, call the `uploadAndIndex` function on `lambda/index.js`. That function then uploads the images, one by one, to Cloudinary, tagging and indexing them during the process. See this code:
 
 ```javascript
 const cld_rekog = require('./index')
@@ -149,8 +155,8 @@ Once indexing is complete, `faceId` is displayed as an image tag, such as the on
 ![Index and Upload Example 1](https://cloudinary-res.cloudinary.com/image/upload/blog/face-recognition/uploaded-and-indexed.jpg)
 
 
-## Testing the App
-Finally, test the app. Start by uploading images into the `assets` folder. Feel free to upload multiface images in addition to single-face ones. If face matches are found, the app shows the related names as tags on the images. The entire process usually takes several seconds for images with a few faces and upto 25-30 seconds for images that contain many faces.
+## 4. Testing the App
+Finally, test the app. Start by uploading images into the `assets` folder. Feel free to upload multi face images in addition to single-face ones. If face matches are found, the app shows the related names as tags on the images. The entire process usually takes several seconds for images with a few faces and up to 25-30 seconds for images that contain many faces.
 
 Refresh the page to see the tags.
 
@@ -161,9 +167,9 @@ These two screenshots are examples of a successful facial tagging:
 ![Example 2](https://cloudinary-res.cloudinary.com/image/upload/blog/face-recognition/tagged-image-2.jpg)
 
 
-## Few things to note
+## 5. Couple of items to note
 1. Amazon Rekognition can detect up to 100 of the largest faces in an image. If there are more, Amazon Rekognition skips detecting some faces. See the details in the https://docs.aws.amazon.com/rekognition/latest/dg/faces-detect-images.html.
-2. This app does not focus on security. Please follow guidelines below to implement security 
+2. The sample code on this app is to demonstrate how Cloudinary can be integrated with Amazon Rekognition service to detect and auto tag images. It is not a complete code with security and error handling and thus is not recommended for Production as-is.
+Please follow guidelines below to implement security 
    1. In order to validate if the incoming request to Lambda function is from Cloudinary please see https://cloudinary.com/documentation/upload_images#verifying_notification_signatures
    2. In order to control access to API on API Gateway please see https://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html
-3. Complete error handling and notification in event of any error is not done. Please add appropriate error handling as necessary.
