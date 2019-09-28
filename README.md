@@ -39,7 +39,7 @@ Follow these steps to deploy the app on lambda:
 1. Clone the project
 2. `cd cloudinary-face-rekognition/lambda`
 3. `npm i`
-4. If you need to deploy this app to a Linux environemnt and if the app is packaged on non-Linux machines such as OS X and Windows, run the commands below. This will setup Sharp module (required for face extraction from images) for Linux environment. Additional details at - https://github.com/lovell/sharp/blob/master/docs/install.md
+4. If you need to deploy this app to a Linux environment and if the app is packaged on non-Linux machines such as OS X and Windows, run the commands below. This will setup Sharp module (required for face extraction from images) for Linux environment. Additional details at - https://github.com/lovell/sharp/blob/master/docs/install.md
 
     `rm -rf node_modules/sharp`
     
@@ -170,7 +170,7 @@ These two screenshots are examples of a successful facial tagging:
 
 ## 5. Couple of items to note
 1. Amazon Rekognition can detect up to 100 of the largest faces in an image. If there are more, Amazon Rekognition skips detecting some faces. See the details in the https://docs.aws.amazon.com/rekognition/latest/dg/faces-detect-images.html.
-2. The sample code on this app is to demonstrate how Cloudinary can be integrated with Amazon Rekognition service to detect and auto tag images. It is not a complete code with security and error handling and thus is not recommended for Production as-is.
+2. The sample code on this app is to demonstrate how Cloudinary can be integrated with Amazon Rekognition service to detect faces and auto tag images. It is not a complete code with security and error handling and thus is not recommended for Production as-is.
 Please follow guidelines below to implement security 
    1. In order to validate if the incoming request to Lambda function is from Cloudinary please see https://cloudinary.com/documentation/upload_images#verifying_notification_signatures
    2. In order to control access to API on API Gateway please see https://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html
