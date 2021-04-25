@@ -172,5 +172,5 @@ These two screenshots are examples of a successful facial tagging:
 1. Amazon Rekognition can detect up to 100 of the largest faces in an image. If there are more, Amazon Rekognition skips detecting some faces. See the details in the https://docs.aws.amazon.com/rekognition/latest/dg/faces-detect-images.html.
 2. The sample code on this app is to demonstrate how Cloudinary can be integrated with Amazon Rekognition service to detect faces and auto tag images. It is not a complete code with security and error handling and thus is not recommended for Production as-is.
 Please follow guidelines below to implement security 
-   1. In order to validate if the incoming request to Lambda function is from Cloudinary please see https://cloudinary.com/documentation/upload_images#verifying_notification_signatures
+   1. In order to validate if the incoming request to Lambda function is from Cloudinary please see https://cloudinary.com/documentation/notifications#verifying_notification_signatures
    2. In order to control access to API on API Gateway please see https://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html
