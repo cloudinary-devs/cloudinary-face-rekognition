@@ -27,6 +27,7 @@ const rekognition = new AWS.Rekognition()
 const rp = require('request-promise').defaults({
 	encoding: null
 })
+
 const cloudinary = require('cloudinary').v2
 const cld = require('./cld-utils')
 
@@ -42,6 +43,15 @@ const environmentVariables = {
 	transformationParams: process.env.transformationParams,
 }
 
+/* const environmentVariables = {
+	rekognitionCollection: "cld-rekog-collection",
+	confidence_threshold: 80,
+	faceRecognitionFolder: "assets",
+	trainingFolder: "training",
+	faceLabelTagPrefix: "faceLabel",
+	transformationParams: "q_auto",
+} */
+
 /* 
 	Used to replaces spaces in names before setting them as external id when invoking indexFace
 */
@@ -53,7 +63,7 @@ const cloudinaryBaseUrl = 'https://res.cloudinary.com/' + cloudinary.config().cl
 	1. Indexes the image if the image was uploaded to training folder and has a 'faceLabel:' tag
 	2. Searches for faces and tags them with people's names if search match was found
 */
-exports.handler = (event, context, callback) => {
+exports.handler = async (event, context, callback) => {
 	console.log('Incoming event - ', event)
 	if (event.notification_type === 'resource_tags_changed') {
 		for (const resource of event.resources) {
@@ -62,7 +72,7 @@ exports.handler = (event, context, callback) => {
 					if (tag.startsWith(environmentVariables.faceLabelTagPrefix)) {
 						const url = cloudinaryBaseUrl + resource.public_id + '.jpg'
 						try {
-							processIndexOperation(resource.public_id, tag.substring(tag.indexOf(':') + 1, tag.length), url)
+							await processIndexOperation(resource.public_id, tag.substring(tag.indexOf(':') + 1, tag.length), url)
 						} catch (error) {
 							console.log("Indexing not successful for ", resource.url)
 						}
@@ -77,7 +87,7 @@ exports.handler = (event, context, callback) => {
 				if (tag.startsWith(environmentVariables.faceLabelTagPrefix)) {
 					const url = cloudinaryBaseUrl + event.public_id + '.jpg'
 					try {
-						processIndexOperation(event.public_id, tag, url)
+						await processIndexOperation(event.public_id, tag, url)
 					} catch (error) {
 						console.log("Indexing not successful for ", url)
 					}
@@ -86,21 +96,18 @@ exports.handler = (event, context, callback) => {
 			}
 		} else if (event.public_id.startsWith(environmentVariables.faceRecognitionFolder)) {
 			const url = cloudinaryBaseUrl + event.public_id + '.jpg'
-			search(url)
-				.then(faceTags => {
-					console.log('Found face tags - ', faceTags)
-					if (faceTags && faceTags.length > 0) {
-						cld.addTags(faceTags, event.public_id)
-							.then(response => {
-								console.log("Tags added response - ", response)
-							})
-							.catch(error => {
-								console.log("Could not add tag for %s, error - %s", event.public_id, error)
-							})
-					}
-				}).catch(error => {
-					console.log("Error occurred during search ", error)
+			const faceTags = await search(url).catch(error => {
+				console.log("Error occurred during search ", error)
+				throw error
+			})
+			console.log('Found face tags - ', faceTags)
+			if (faceTags && faceTags.length > 0) {
+				const cldResponse = await cld.addTags(faceTags, event.public_id).catch(error => {
+					console.log("Could not add tag for %s, error - %s", event.public_id, error)
+					throw error
 				})
+				console.log("Name added as as tags - ", cldResponse)
+			}
 		}
 	}
 }
@@ -109,8 +116,24 @@ exports.handler = (event, context, callback) => {
 	This function creates a recognition collection of a collection doesn't already exist. With an active collection, this function then
 	invokes indexFace function. This function is the entry point to create a trained collection
 */
-const processIndexOperation = (public_id, tag, url) => {
-	rekognition.listCollections({}, async (error, data) => {
+const processIndexOperation = async (public_id, tag, url) => {
+	try {
+		const collection = await rekognition.describeCollection({
+			CollectionId: environmentVariables.rekognitionCollection
+		}).promise()
+		await indexFace(public_id, getExternalId(tag), url)
+	} catch (error) {
+		if (error.code === 'ResourceNotFoundException') {
+			let createCollectionResponse = await rekognition.createCollection({
+				CollectionId: environmentVariables.rekognitionCollection
+			}).promise()
+			console.log("Created collection ", createCollectionResponse)
+			await indexFace(public_id, getExternalId(tag), url)
+		} else {
+			throw error
+		}
+	}
+	/* rekognition.listCollections({}, async (error, data) => {
 		if (error) {
 			console.log('Collection could not be listed ', error)
 			throw error
@@ -122,7 +145,7 @@ const processIndexOperation = (public_id, tag, url) => {
 			console.log("Created collection ", createCollectionResponse)
 		}
 		indexFace(public_id, getExternalId(tag), url)
-	})
+	}) */
 }
 
 /* 
@@ -135,7 +158,9 @@ const indexFace = async (public_id, external_id, url) => {
 		ExternalImageId: external_id,
 		Image: {
 			Bytes: await rp(url)
-				.then(data => new Buffer.from(data, 'base64'))
+				.then(data => {
+					return new Buffer.from(data, 'base64')
+				})
 				.catch(error => {
 					console.log("Count not fetch url ", url)
 					throw error
@@ -144,25 +169,21 @@ const indexFace = async (public_id, external_id, url) => {
 		MaxFaces: 1,
 		QualityFilter: 'AUTO'
 	}
-
-	rekognition.indexFaces(paramsIndexFace, (error, dataIndex) => {
-		if (error) {
-			console.log("Error occurred while indeing face ", error)
-		}
-		if (dataIndex.FaceRecords && dataIndex.FaceRecords.length) {
-			const faceId = dataIndex.FaceRecords[0].Face.FaceId
-			console.log("Adding face id %s to public id %s, external id", faceId, public_id, external_id)
-			cld.addTags(['faceId:' + faceId], public_id)
-				.then(response => {
-					console.log("Face id tag added for ", response.public_id)
-				})
-				.catch(error => {
-					console.log("Could not add face id tag for %s, error - %s", public_id, error)
-				})
-		} else {
-			console.log("No faces found - ", JSON.stringify(dataIndex))
-		}
+	const dataIndex = await rekognition.indexFaces(paramsIndexFace).promise().catch(error => {
+		throw error
 	})
+	if (dataIndex.FaceRecords && dataIndex.FaceRecords.length) {
+		const faceId = dataIndex.FaceRecords[0].Face.FaceId
+		console.log("Adding face id %s to public id %s, external id", faceId, public_id, external_id)
+		const cldResponse = await cld.addTags(['faceId:' + faceId], public_id).catch(error => {
+			console.log("Could not add face id tag for %s, error - %s", public_id, error)
+			throw error
+		})
+		console.log("Face id tag added for ", cldResponse.public_id)
+
+	} else {
+		console.log("No faces found - ", JSON.stringify(dataIndex))
+	}
 }
 
 /* 
